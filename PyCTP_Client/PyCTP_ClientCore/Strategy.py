@@ -14,7 +14,7 @@ import Utils
 from pandas import DataFrame, Series
 import pandas as pd
 from PyQt4 import QtCore
-import PyCTP
+import pyctp
 # import queue
 # import threading
 # from PyCTP_Trade import PyCTP_Trader_API
@@ -60,6 +60,7 @@ class Strategy():
         # if self.if_exist_instrument_id(self.__b_instrument_id) == False:
         #     return
         self.get_td_api_arguments()  # 从TdApi获取必要的参数（合约乘数、手续费等）
+        print(">>>Strategy.__init__() call init_position_detail()")
         self.init_position_detail()  # 初始化策略持仓明细order、持仓明细trade
         # self.update_position_of_position_detail_for_trade()  # 利用trade持仓明细更新策略持仓变量
         self.update_position_of_position_detail_for_order()  # 利用order持仓明细更新策略持仓变量
@@ -261,7 +262,7 @@ class Strategy():
     def init_position_detail(self):
         print("Strategy.init_position_detail() user_id =", self.__user_id, "strategy_id =", self.__strategy_id, "len(self.__update_position_detail_record_time) =", len(self.__update_position_detail_record_time))
         # RESUM模式启动，xml数据可用，装载xml数据
-        if self.__user.get_TdApi_start_model() == PyCTP.THOST_TERT_RESUME:
+        if self.__user.get_TdApi_start_model() == pyctp.THOST_TERT_RESUME:
             # 持仓明细order
             self.__list_position_detail_for_order = list()  # 初始化本策略持仓明细order
             for i in self.__user.get_xml_list_position_detail_for_order():
@@ -275,7 +276,7 @@ class Strategy():
                     self.__list_position_detail_for_trade.append(i)
 
         # RESTART模式启动，xml数据不可用，装载server数据
-        elif self.__user.get_TdApi_start_model() == PyCTP.THOST_TERT_RESTART:  # RESTART模式启动，xml数据不可用
+        elif self.__user.get_TdApi_start_model() == pyctp.THOST_TERT_RESTART:  # RESTART模式启动，xml数据不可用
             # 当前交易日没有修改过策略持仓，持仓明细初始值为昨日持仓明细
             if len(self.__update_position_detail_record_time) == 0:
                 # 昨日持仓明细order
@@ -690,6 +691,7 @@ class Strategy():
         self.__exchange_id_b = self.get_exchange_id(self.__b_instrument_id)  # A合约所属的交易所代码
         self.__dict_commission_a = self.__user.get_commission(self.__a_instrument_id, self.__exchange_id_a)  # A合约手续费的dict
         self.__dict_commission_b = self.__user.get_commission(self.__b_instrument_id, self.__exchange_id_b)  # B合约手续费的dict
+        print(">>>Strategy.get_td_api_arguments() self.__dict_commission_a =", self.__dict_commission_a)
 
     # 装载xml
     def load_xml(self):
@@ -820,7 +822,7 @@ class Strategy():
     # 统计指标
     def init_statistics(self):
         # RESUME模式,xml数据可用,装载xml数据
-        if self.__user.get_TdApi_start_model() == PyCTP.THOST_TERT_RESUME:
+        if self.__user.get_TdApi_start_model() == pyctp.THOST_TERT_RESUME:
             # 策略统计数据
             self.__dict_statistics = dict()
             for i in self.__user.get_xml_list_strategy_statistics():
@@ -843,7 +845,7 @@ class Strategy():
             # print("Strategy.init_strategy_data() user_id =", self.__user_id, 'data_flag = strategy_statistics', 'data_msg =', dict_msg)
             self.__user.get_Queue_user().put(dict_msg)  # 进程通信：user->main，发送最新策略持仓
         # RESTART模式,xml数据不可用,使用初始值
-        elif self.__user.get_TdApi_start_model() == PyCTP.THOST_TERT_RESTART:
+        elif self.__user.get_TdApi_start_model() == pyctp.THOST_TERT_RESTART:
             self.__dict_statistics = {
                 # 成交统计的类计指标（trade）
                 'a_profit_close': self.__a_profit_close,  # A平仓盈亏
@@ -2098,7 +2100,6 @@ class Strategy():
 
     # 回调函数：行情推送
     def OnRtnDepthMarketData(self, tick):
-        # self.signal_handle_tick.emit(tick)  # 触发信号
         """ 行情推送
         # print(">>> Strategy.OnRtnDepthMarketData() tick=", tick)
         if tick is None:
@@ -2156,10 +2157,8 @@ class Strategy():
         # 刷新界面价差
         self.spread_to_ui()
         """
-        if tick is None:
-            return
-
-        self.slot_handle_tick(tick)  # 转到行情处理
+        # self.slot_handle_tick(tick)  # 转到行情处理
+        pass
 
     @QtCore.pyqtSlot(dict)
     def slot_handle_tick(self, tick):
@@ -2176,12 +2175,14 @@ class Strategy():
 
         # 过滤出B合约的tick
         if tick['InstrumentID'] == self.__b_instrument_id:
-            self.__b_tick = copy.deepcopy(tick)
+            # self.__b_tick = copy.deepcopy(tick)
+            self.__b_tick = tick
             # self.update_profit_position(self.__b_tick)  # 更新持仓盈亏
             # print(self.__user_id + self.__strategy_id, "B合约：", self.__b_tick)
         # 过滤出A合约的tick
         elif tick['InstrumentID'] == self.__a_instrument_id:
-            self.__a_tick = copy.deepcopy(tick)
+            # self.__a_tick = copy.deepcopy(tick)
+            self.__a_tick = tick
             # self.update_profit_position(self.__b_tick)  # 更新持仓盈亏
             # print(self.__user_id + self.__strategy_id, "A合约：", self.__a_tick)
 

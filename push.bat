@@ -10,6 +10,6 @@ set /p comments=please input commit comments:
 git status
 git add .
 git commit -m "%timestamp% %comments%"
-git push origin PyCTP_Dev
+git push origin master
 echo "Finished Push!"
 pause

@@ -1,0 +1,15 @@
+we are not frozen
+bundle dir is D:\CTP\PyCTPMini2\PyCTP_Client\PyCTP_ClientCore
+sys.argv[0] is D:/CTP/PyCTPMini2/PyCTP_Client/PyCTP_ClientCore/ClientMain.py
+sys.executable is D:\Python34\python.exe
+os.getcwd is D:\CTP\PyCTPMini2\PyCTP_Client\PyCTP_ClientCore
+process_id = 6836 thread.getName()= MainThread , __main__
+>>> StocketManager.read_ip_address() ip_address = 101.95.163.34 8901
+SocketManager.connect() self.__ip_address 101.95.163.34
+QAccountWidget.slot_addTabBar() self.__dict_clicked_info = {'所有账户': {}}
+SocketManager.RecvN() [WinError 10057] 由于套接字没有连接并且(当使用一个 sendto 调用发送数据报套接字时)没有提供地址，发送或接收数据的请求没有被接受。 2062 0
+>>> StrategyDataModel.slot_set_data_list() 更新tableView整个区域, len(data_list) = 0
+QLogin.on_pushButton_login_clicked() thread.getName()= MainThread
+SocketManager.run_send_msg() MsgType = 1 {'Password': '123456', 'MsgRef': 1, 'MsgType': 1, 'TraderID': '1601', 'MsgSendFlag': 0, 'MsgSrc': 0}
+SocketManager.slot_send_msg() except socket.error as e: [WinError 10057] 由于套接字没有连接并且(当使用一个 sendto 调用发送数据报套接字时)没有提供地址，发送或接收数据的请求没有被接受。
+>>> QLogin.closeEvent() 

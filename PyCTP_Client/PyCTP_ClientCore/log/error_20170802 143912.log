@@ -1,0 +1,15 @@
+Traceback (most recent call last):
+  File "D:\CTP\PyCTPMini2\PyCTP_Client\PyCTP_ClientCore\SocketManager.py", line 378, in RecvN
+    onceContent = socketd.recv(n - totalRecved)
+OSError: [WinError 10057] 由于套接字没有连接并且(当使用一个 sendto 调用发送数据报套接字时)没有提供地址，发送或接收数据的请求没有被接受。
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\CTP\PyCTPMini2\PyCTP_Client\PyCTP_ClientCore\SocketManager.py", line 453, in run
+    data = self.RecvN(self.__sockfd, 2 * 1024 + 14)
+  File "D:\CTP\PyCTPMini2\PyCTP_Client\PyCTP_ClientCore\SocketManager.py", line 387, in RecvN
+    self.__thread_connect.start()
+  File "D:\Python34\lib\threading.py", line 846, in start
+    raise RuntimeError("threads can only be started once")
+RuntimeError: threads can only be started once

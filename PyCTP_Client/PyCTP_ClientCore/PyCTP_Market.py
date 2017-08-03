@@ -10,17 +10,24 @@ import threading
 import time
 import Utils
 from pandas import Series, DataFrame
-import PyCTP
+import pyctp
 # import pandas as pd
 
 
-class PyCTP_Market_API(PyCTP.CThostFtdcMdApi):
+class PyCTP_Market_API(pyctp.CThostFtdcMdSpi):
     TradingDay = ''
     TIMEOUT = 10
 
     __RequestID = 0
     __isLogined = False
     is_first_connect = True
+
+    def __init__(self, front, broker_id, user_id, password):
+        pyctp.CThostFtdcMdSpi.__init__(self)
+        self.__front_address = front
+        self.__broker_id = broker_id
+        self.__user_id = user_id
+        self.__password = password
 
     def __IncRequestID(self):
         """ 自增并返回请求ID """
@@ -33,10 +40,19 @@ class PyCTP_Market_API(PyCTP.CThostFtdcMdApi):
 
     def Connect(self, frontAddr):
         """ 连接前置服务器 """
-        self.__FrontAddress = frontAddr
-        self.RegisterSpi(self)
-        self.RegisterFront(frontAddr)
-        self.Init()
+        # 创建流文件路劲
+        s_tmp = (self.__front_address[6:])
+        n_position = s_tmp.index(':')
+        s_part1 = (s_tmp[:n_position])
+        s_part2 = (s_tmp[n_position+1:])
+        s_path = 'conn/md/' + s_part1 + '_' + s_part2 + '/'
+        Utils.make_dirs(s_path)
+        # 创建api对象
+        self.api = pyctp.CThostFtdcMdApi_CreateFtdcMdApi(s_path)
+        self.api.RegisterSpi(self)
+        self.api.RegisterFront(frontAddr)
+        self.api.Init()
+
         self.__rsp_Connect = dict(event=threading.Event())
         self.__rsp_Connect['event'].clear()
 
@@ -46,22 +62,31 @@ class PyCTP_Market_API(PyCTP.CThostFtdcMdApi):
     def UnConnect(self):
         """ywy：断开连接，释放MarketApi"""
         # self.RegisterSpi(None)
-        self.Release()
+        self.api.Release()
 
-    def Login(self, BrokerID, UserID=b'', Password=b''):
+    def Login(self, BrokerID, UserID='', Password=''):
+        # print(">>> PyCTP_Market.Login() called, BrokerID =", BrokerID, "UserID =", UserID, "Password =", Password)
         """ 用户登录请求 """
         # 行情登录过程中的UserID和Password可以为空
-        reqUserLogin = dict(BrokerID=BrokerID,
-                            UserID=UserID,
-                            Password=Password)
-        if not PyCTP_Market_API.is_first_connect:
-            pass
-            #self.__rsp_Login = dict(RequestID=self.__IncRequestID())
-        else:
+        # reqUserLogin = dict(BrokerID=BrokerID,
+        #                     UserID=UserID,
+        #                     Password=Password)
+        # 行情登录api方法形参结构体
+        field = pyctp.CThostFtdcReqUserLoginField()
+        field.BrokerID = BrokerID
+        field.UserID = UserID
+        field.Password = Password
+
+        # 第一次登录
+        if PyCTP_Market_API.is_first_connect:
+            print(">>> PyCTP_Market.Login() 第一次登录, BrokerID =", BrokerID, "UserID =", UserID, "Password =", Password)
             self.__rsp_Login = dict(event=threading.Event(),
                                     RequestID=self.__IncRequestID())
+        # 非第一次登录，例如登录之后断线重连
+        else:
+            pass
 
-        ret = self.ReqUserLogin(reqUserLogin, self.__rsp_Login['RequestID'])
+        ret = self.api.ReqUserLogin(field, self.__rsp_Login['RequestID'])
         if ret == 0:
             self.__rsp_Login['event'].clear()
             if self.__rsp_Login['event'].wait(self.TIMEOUT):
@@ -79,11 +104,15 @@ class PyCTP_Market_API(PyCTP.CThostFtdcMdApi):
 
     def Logout(self):
         """ 登出请求 """
-        reqUserLogout = dict(BrokerID=self.__BrokerID,
-                             UserID=self.__UserID)
+        # reqUserLogout = dict(BrokerID=self.__BrokerID,
+        #                      UserID=self.__UserID)
+        field = pyctp.CThostFtdcUserLogoutField()
+        field.BrokerID = self.__BrokerID
+        field.UserID = self.__UserID
         self.__rsp_Logout = dict(event=threading.Event(),
                                  RequestID=self.__IncRequestID())
-        ret = self.ReqUserLogout(reqUserLogout, self.__rsp_Logout['RequestID'])
+
+        ret = self.ReqUserLogout(field, self.__rsp_Logout['RequestID'])
         if ret == 0:
             self.__rsp_Logout['event'].clear()
             if self.__rsp_Logout['event'].wait(self.TIMEOUT):
@@ -95,9 +124,11 @@ class PyCTP_Market_API(PyCTP.CThostFtdcMdApi):
         return ret
 
     def SubMarketData(self, InstrumentID):
+        print(">>>PyCTP_Market.SubMarketData() InstrumentID =", InstrumentID)
         """ 订阅行情 """
         self.__rsp_SubMarketData = dict(results=[], ErrorID=0, event=threading.Event(), RequestID=self.__IncRequestID())
-        ret = self.SubscribeMarketData(InstrumentID, len(InstrumentID))
+        ret = self.api.SubscribeMarketData(InstrumentID, len(InstrumentID))
+        print(">>>PyCTP_Market.SubMarketData() ret =", ret)
         if ret == 0:
             self.__rsp_SubMarketData['event'].clear()
             if self.__rsp_SubMarketData['event'].wait(self.TIMEOUT):
@@ -109,9 +140,10 @@ class PyCTP_Market_API(PyCTP.CThostFtdcMdApi):
         return ret
 
     def UnSubMarketData(self, InstrumentID):
+        print(">>>PyCTP_Market.UnSubMarketData() InstrumentID =", InstrumentID)
         """ 退订行情 """
         self.__rsp_UnSubMarketData = dict(results=[], ErrorID=0, event=threading.Event(), RequestID=self.__IncRequestID())
-        ret = self.UnSubscribeMarketData(InstrumentID, len(InstrumentID))
+        ret = self.api.UnSubscribeMarketData(InstrumentID, len(InstrumentID))
         if ret == 0:
             self.__rsp_UnSubMarketData['event'].clear()
             if self.__rsp_UnSubMarketData['event'].wait(self.TIMEOUT):
@@ -164,22 +196,29 @@ class PyCTP_Market_API(PyCTP.CThostFtdcMdApi):
         #    sys.stderr.write('自动登陆: %d' % self.Login(self.__BrokerID, self.__UserID, self.__Password))
 
     def OnRspUserLogin(self, RspUserLogin, RspInfo, RequestID, IsLast):
+        # print(">>>PyCTP_Market.OnRspUserLogin() RspUserLogin =", RspUserLogin, "RspInfo =", RspInfo, "RequestID =", RequestID, "IsLast =", IsLast)
         """ 登录请求响应 """
         if RequestID == self.__rsp_Login['RequestID'] and IsLast:
             #self.__BrokerID = RspUserLogin['BrokerID']
             #self.__UserID = RspUserLogin['UserID']
-            self.__SystemName = RspUserLogin['SystemName']
-            self.__TradingDay = RspUserLogin['TradingDay']
-            PyCTP_Market_API.TradingDay = RspUserLogin['TradingDay']  # 全局变量，记录交易日
-            self.__SessionID = RspUserLogin['SessionID']
-            self.__MaxOrderRef = RspUserLogin['MaxOrderRef']
-            self.__INETime = RspUserLogin['INETime']
-            self.__FrontID = RspUserLogin['FrontID']
-            self.__FFEXTime = RspUserLogin['FFEXTime']
-            self.__SHFETime = RspUserLogin['SHFETime']
-            self.__CZCETime = RspUserLogin['CZCETime']
-            self.__DCETime = RspUserLogin['DCETime']
-            self.__LoginTime = RspUserLogin['LoginTime']
+            self.__SystemName = RspUserLogin.SystemName
+            # print(">>>PyCTP_Market.OnRspUserLogin() RspUserLogin.SystemName =", RspUserLogin.SystemName)
+            self.__TradingDay = RspUserLogin.TradingDay
+            PyCTP_Market_API.TradingDay = RspUserLogin.TradingDay  # 全局变量，记录交易日
+            # print(">>>PyCTP_Market.OnRspUserLogin() RspUserLogin.TradingDay =", RspUserLogin.TradingDay)
+            self.__SessionID = RspUserLogin.SessionID
+            self.__MaxOrderRef = RspUserLogin.MaxOrderRef
+            self.__INETime = RspUserLogin.INETime
+            self.__FrontID = RspUserLogin.FrontID
+            self.__FFEXTime = RspUserLogin.FFEXTime
+            self.__SHFETime = RspUserLogin.SHFETime
+            self.__CZCETime = RspUserLogin.CZCETime
+            self.__DCETime = RspUserLogin.DCETime
+            self.__LoginTime = RspUserLogin.LoginTime
+            RspInfo = {
+                'ErrorID': RspInfo.ErrorID,  # 错误代码
+                'ErrorMsg': RspInfo.ErrorMsg  # 错误信息
+            }
             self.__rsp_Login.update(RspInfo)
             self.__rsp_Login['event'].set()
 
@@ -194,36 +233,72 @@ class PyCTP_Market_API(PyCTP.CThostFtdcMdApi):
 
     def OnRspError(self, RspInfo,  RequestID, IsLast):
         """ 错误信息 """
-        sys.stderr.write(repr(([RspInfo['ErrorID'], str(RspInfo['ErrorMsg'], encoding='gb2312')], RequestID, IsLast)))
+        sys.stderr.write(repr(([RspInfo.ErrorID, str(RspInfo.ErrorMsg, encoding='gb2312')], RequestID, IsLast)))
 
-    def OnRspSubMarketData(self, SpecificInstrument, RspInfo, RequestID, IsLast):
+    def OnRspSubMarketData(self, SpecificInstrumentField, RspInfoField, RequestID, IsLast):
         """ 订阅行情应答 """
+        print(">>>PyCTP_Market.OnRspSubMarketData() called")
         if RequestID == self.__rsp_SubMarketData['RequestID']:
-            if RspInfo is not None:
+            if RspInfoField is not None:
+                RspInfo = {
+                    'ErrorID': RspInfoField.ErrorID,  # 错误代码
+                    'ErrorMsg': RspInfoField.ErrorMsg  # 错误信息
+                }
                 self.__rsp_SubMarketData.update(RspInfo)
-            if SpecificInstrument is not None:
-                self.__rsp_SubMarketData['results'].append(SpecificInstrument)
+            if SpecificInstrumentField is not None:
+                InstrumentId = SpecificInstrumentField.InstrumentID
+                self.__rsp_SubMarketData['results'].append(InstrumentId)
             if IsLast:
                 self.__rsp_SubMarketData['event'].set()
 
-    def OnRspUnSubMarketData(self, SpecificInstrument, RspInfo, RequestID, IsLast):
+    def OnRspUnSubMarketData(self, SpecificInstrumentField, RspInfoField, RequestID, IsLast):
         """ 取消订阅行情应答 """
         if RequestID == self.__rsp_UnSubMarketData['RequestID']:
-            if RspInfo is not None:
+            if RspInfoField is not None:
+                RspInfo = {
+                    'ErrorID': RspInfoField.ErrorID,  # 错误代码
+                    'ErrorMsg': RspInfoField.ErrorMsg  # 错误信息
+                }
                 self.__rsp_UnSubMarketData.update(RspInfo)
-            if SpecificInstrument is not None:
-                self.__rsp_UnSubMarketData['results'].append(SpecificInstrument)
+            if SpecificInstrumentField is not None:
+                InstrumentID = SpecificInstrumentField.InstrumentID
+                self.__rsp_UnSubMarketData['results'].append(InstrumentID)
             if IsLast:
                 self.__rsp_UnSubMarketData['event'].set()
 
-    df_tick_data_columns_name = ['InstrumentID', 'time', 'last', 'volume', 'amount', 'position', 'ask1', 'bid1', 'asize1', 'bsize1']
-    df_tick_data = DataFrame(columns=df_tick_data_columns_name, data=None)
-
     def OnRtnDepthMarketData(self, DepthMarketData):
         """ 行情推送 """
-        import datetime
         # print('PyCTP_Market.OnRtnDepthMarketData() DepthMarketData=', DepthMarketData)
-        tick = Utils.code_transform(DepthMarketData)
+        tick = {
+            'TradingDay': DepthMarketData.TradingDay,
+            'InstrumentID': DepthMarketData.InstrumentID,
+            'ExchangeID': DepthMarketData.ExchangeID,
+            'ExchangeInstID': DepthMarketData.ExchangeInstID,
+            'LastPrice': DepthMarketData.LastPrice,
+            'PreSettlementPrice': DepthMarketData.PreSettlementPrice,
+            'PreClosePrice': DepthMarketData.PreClosePrice,
+            'PreOpenInterest': DepthMarketData.PreOpenInterest,
+            'OpenPrice': DepthMarketData.OpenPrice,
+            'HighestPrice': DepthMarketData.HighestPrice,
+            'LowestPrice': DepthMarketData.LowestPrice,
+            'Volume': DepthMarketData.Volume,
+            'Turnover': DepthMarketData.Turnover,
+            'OpenInterest': DepthMarketData.OpenInterest,
+            'ClosePrice': DepthMarketData.ClosePrice,
+            'SettlementPrice': DepthMarketData.SettlementPrice,
+            'UpperLimitPrice': DepthMarketData.UpperLimitPrice,
+            'LowerLimitPrice': DepthMarketData.LowerLimitPrice,
+            'UpdateTime': DepthMarketData.UpdateTime,
+            'UpdateMillisec': DepthMarketData.UpdateMillisec,
+            'BidPrice1': DepthMarketData.BidPrice1,
+            'BidVolume1': DepthMarketData.BidVolume1,
+            'AskPrice1': DepthMarketData.AskPrice1,
+            'AskVolume1': DepthMarketData.AskVolume1,
+            'BidPrice2': DepthMarketData.BidPrice2,
+            'AveragePrice': DepthMarketData.AveragePrice,
+            'ActionDay': DepthMarketData.ActionDay
+        }
+        # tick = Utils.code_transform(DepthMarketData)
         # print('PyCTP_Market.OnRtnDepthMarketData() tick=', tick)
         # PyCTP_Market_API.df_tick_data = PyCTP_Market_API.df_tick_data.append(other=Series(tick),
         #                                                                      ignore_index=True,

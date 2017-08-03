@@ -27,36 +27,29 @@ class MarketManager:
     def __init__(self, dict_args):
         print('process_id =', os.getpid(), ', MarketManager.__init__() dict_arguments =', dict_args)
         # 多账户系统中，只需要创建一个行情API
-        front_address = dict_args['frontaddress']
-        broker_id = dict_args['brokerid']
-        user_id = dict_args['userid']
-        password = dict_args['password']
-        s_tmp = (front_address[6:]).encode()
-        n_position = s_tmp.index(b':')
-        s_part1 = (s_tmp[:n_position])
-        s_part2 = (s_tmp[n_position+1:])
-        s_path = b'conn/md/' + s_part1 + b'_' + s_part2 + b'/'
-        Utils.make_dirs(s_path)  # 创建流文件路劲
-        self.__market = PyCTP_Market_API.CreateFtdcMdApi(s_path)
-        self.__market.set_MarketManager(self)
-        # self.__market.set_strategy(strategy)
-        self.__broker_id = broker_id.encode()
-        self.__front_address = front_address.encode()
-        self.__user_id = user_id.encode()
-        self.__password = password.encode()
+        self.__front_address = dict_args['frontaddress']
+        self.__broker_id = dict_args['brokerid']
+        self.__user_id = dict_args['userid']
+        self.__password = dict_args['password']
+        # 创建底层API行情对象
+        self.__market = PyCTP_Market_API(self.__front_address,
+                                         self.__broker_id,
+                                         self.__user_id,
+                                         self.__password)
+        self.__market.set_MarketManager(self)  # 将本类设置为self.__market的属性
         # 连接行情前置
-        self.__result_market_connect = Utils.code_transform(self.__market.Connect(self.__front_address))
+        self.__result_market_connect = self.__market.Connect(self.__front_address)
         if self.__result_market_connect == 0:
-            print('MarketManager.__init__() 连接行情前置成功，broker_id =', broker_id)
+            print('MarketManager.__init__() 连接行情前置成功，broker_id =', self.__broker_id)
         else:
-            print('MarketManager.__init__() 连接行情前置失败,broker_id =', broker_id, '返回值：', self.__result_market_connect)
+            print('MarketManager.__init__() 连接行情前置失败,broker_id =', self.__broker_id, '返回值：', self.__result_market_connect)
             self.__init_finished = False  # 初始化失败
         # 登录行情账号
-        self.__result_market_login = Utils.code_transform(self.__market.Login(self.__broker_id, self.__user_id, self.__password))
+        self.__result_market_login = self.__market.Login(self.__broker_id, self.__user_id, self.__password)
         if self.__result_market_login == 0:
-            print('MarketManager.__init__() 登录行情账号成功，broker_id =', broker_id)
+            print('MarketManager.__init__() 登录行情账号成功，broker_id =', self.__broker_id)
         else:
-            print('MarketManager.__init__() 登录行情账号失败，broker_id =', broker_id, '返回值：', self.__result_market_login)
+            print('MarketManager.__init__() 登录行情账号失败，broker_id =', self.__broker_id, '返回值：', self.__result_market_login)
             self.__init_finished = False  # 初始化失败
 
         # 已经订阅行情的合约列表，为每一个合约创建一个字典，键名为instrument_id，键值为list，list元素为user_id+strategy_id
@@ -66,7 +59,7 @@ class MarketManager:
         # ['cu1705', 'cu1706']
         self.__list_instrument_subscribed_detail_group_box = list()
 
-        self.__TradingDay = self.__market.get_TradingDay().decode()
+        self.__TradingDay = self.__market.get_TradingDay()
         print("MarketManager.__init__() 行情端口交易日：", self.__TradingDay)
         self.__init_finished = True  # 初始化成功
 
@@ -115,12 +108,12 @@ class MarketManager:
         if len(list_instrument_id_to_sub) > 0:
             time.sleep(1.0)
             # print(">>> MarketManager.sub_market() list_instrument_id_to_sub =", list_instrument_id_to_sub)
-            for i in range(len(list_instrument_id_to_sub)):
-                if isinstance(list_instrument_id_to_sub[i], str):
-                    list_instrument_id_to_sub[i] = list_instrument_id_to_sub[i].encode()
+            # for i in range(len(list_instrument_id_to_sub)):
+            #     if isinstance(list_instrument_id_to_sub[i], str):
+            #         list_instrument_id_to_sub[i] = list_instrument_id_to_sub[i]
             # print(">>> MarketManager.sub_market() list_instrument_id_to_sub =", list_instrument_id_to_sub)
-
-            print('MarketManager.sub_market() 请求订阅行情', Utils.code_transform(self.__market.SubMarketData(list_instrument_id_to_sub)))
+            result_SubMarketData = self.__market.SubMarketData(list_instrument_id_to_sub)
+            print('MarketManager.sub_market() 请求订阅行情', Utils.code_transform(result_SubMarketData))
             MarketManager.list_instrument_subscribed.extend(list_instrument_id_to_sub)
         print('MarketManager.sub_market() 已订阅行情详情', self.__list_instrument_subscribed_detail)
 
@@ -150,10 +143,11 @@ class MarketManager:
                     break
         if len(list_instrument_id_to_un_sub) > 0:
             time.sleep(1.0)
-            for i in range(len(list_instrument_id_to_un_sub)):
-                if isinstance(list_instrument_id_to_un_sub[i], str):
-                    list_instrument_id_to_un_sub[i] = list_instrument_id_to_un_sub[i].encode()
-            print('MarketManager.un_sub_market() 请求退订行情', list_instrument_id_to_un_sub, Utils.code_transform(self.__market.UnSubMarketData(list_instrument_id_to_un_sub)))
+            # for i in range(len(list_instrument_id_to_un_sub)):
+            #     if isinstance(list_instrument_id_to_un_sub[i], str):
+            #         list_instrument_id_to_un_sub[i] = list_instrument_id_to_un_sub[i].encode()
+            result_UnSubMarketData = self.__market.UnSubMarketData(list_instrument_id_to_un_sub)
+            print('MarketManager.un_sub_market() 请求退订行情', list_instrument_id_to_un_sub, Utils.code_transform(result_UnSubMarketData))
             # MarketManager.list_instrument_subscribed.remove(list_instrument_id_to_un_sub)
             MarketManager.list_instrument_subscribed = list(set(MarketManager.list_instrument_subscribed) - set(list_instrument_id_to_un_sub))
         print('MarketManager.sub_market() 订阅行情详情', self.__list_instrument_subscribed_detail)
@@ -171,9 +165,10 @@ class MarketManager:
             if not find_flag:  # 已经订阅行情列表里不存在，则需要订阅，加入到将要订阅的行情列表
                 list_instrument_id_will_subscribe.append(instrument_id)
         if len(list_instrument_id_will_subscribe) > 0:
-            for i in range(len(list_instrument_id_will_subscribe)):
-                list_instrument_id_will_subscribe[i] = list_instrument_id_will_subscribe[i].encode()
-            print('MarketManager.sub_market() 订阅行情', Utils.code_transform(self.__market.SubMarketData(list_instrument_id_will_subscribe)))
+            # for i in range(len(list_instrument_id_will_subscribe)):
+            #     list_instrument_id_will_subscribe[i] = list_instrument_id_will_subscribe[i].encode()
+            result_SubMarketData = self.__market.SubMarketData(list_instrument_id_will_subscribe)
+            print('MarketManager.sub_market() 订阅行情', Utils.code_transform(result_SubMarketData))
 
         list_instrument_id_will_unsubscribe = []  # 将要退订行情的合约列表
         for instrument_id in self.__list_instrument_subscribed_detail_group_box:
@@ -185,8 +180,8 @@ class MarketManager:
             if not find_flag:
                 list_instrument_id_will_unsubscribe.append(instrument_id)
         if len(list_instrument_id_will_unsubscribe) > 0:
-            for i in range(len(list_instrument_id_will_unsubscribe)):
-                list_instrument_id_will_unsubscribe[i] = list_instrument_id_will_unsubscribe[i].encode()
+            # for i in range(len(list_instrument_id_will_unsubscribe)):
+            #     list_instrument_id_will_unsubscribe[i] = list_instrument_id_will_unsubscribe[i].encode()
             print('MarketManager.sub_market() 订阅行情', Utils.code_transform(self.__market.UnSubMarketData(list_instrument_id_will_subscribe)))
 
     # 登出行情账号，包含登出、断开连接、释放实例
@@ -198,9 +193,11 @@ class MarketManager:
     def OnRtnDepthMarketData(self, tick):
         # print(">>> MarketManager.OnRtnDepthMarketData() tick =", tick)
         instrument_id = tick['InstrumentID']
+        # 将行情转发给策略实例
         for strategy_id in self.__dict_strategy:
             if instrument_id == self.__dict_strategy[strategy_id].get_a_instrument_id() or instrument_id == self.__dict_strategy[strategy_id].get_b_instrument_id():
                 self.__dict_strategy[strategy_id].OnRtnDepthMarketData(tick)
+        # 将行情转发给User实例
         self.__user.OnRtnDepthMarketData(tick)
 
 
@@ -216,37 +213,36 @@ class MarketManagerForUi(QObject):
         super(MarketManagerForUi, self).__init__(parent)
         print('process_id =', os.getpid(), ', MarketManagerForUi.__init__() dict_arguments =', dict_args)
         # 多账户系统中，只需要创建一个行情API
-        front_address = dict_args['frontaddress']
-        broker_id = dict_args['brokerid']
-        user_id = dict_args['userid']
-        password = dict_args['password']
-        s_tmp = (front_address[6:]).encode()
-        n_position = s_tmp.index(b':')
-        s_part1 = (s_tmp[:n_position])
-        s_part2 = (s_tmp[n_position + 1:])
-        s_path = b'conn/md/' + s_part1 + b'_' + s_part2 + b'/'
-        Utils.make_dirs(s_path)  # 创建流文件路劲
-        self.__market = PyCTP_Market_API.CreateFtdcMdApi(s_path)
+        self.__front_address = dict_args['frontaddress']
+        self.__broker_id = dict_args['brokerid']
+        self.__user_id = dict_args['userid']
+        self.__password = dict_args['password']
+        # s_tmp = (front_address[6:]).encode()
+        # n_position = s_tmp.index(b':')
+        # s_part1 = (s_tmp[:n_position])
+        # s_part2 = (s_tmp[n_position + 1:])
+        # s_path = b'conn/md/' + s_part1 + b'_' + s_part2 + b'/'
+        # Utils.make_dirs(s_path)  # 创建流文件路劲
+        self.__market = PyCTP_Market_API(self.__front_address,
+                                         self.__broker_id,
+                                         self.__user_id,
+                                         self.__password)
         self.__market.set_MarketManager(self)
         # self.__market.set_strategy(strategy)
-        self.__broker_id = broker_id.encode()
-        self.__front_address = front_address.encode()
-        self.__user_id = user_id.encode()
-        self.__password = password.encode()
         # 连接行情前置
         self.__result_market_connect = Utils.code_transform(self.__market.Connect(self.__front_address))
         if self.__result_market_connect == 0:
-            print('MarketManagerForUi.__init__() 连接行情前置成功，broker_id =', broker_id)
+            print('MarketManagerForUi.__init__() 连接行情前置成功，broker_id =', self.__broker_id)
         else:
-            print('MarketManagerForUi.__init__() 连接行情前置失败,broker_id =', broker_id, '返回值：', self.__result_market_connect)
+            print('MarketManagerForUi.__init__() 连接行情前置失败,broker_id =', self.__broker_id, '返回值：', self.__result_market_connect)
             self.__init_finished = False  # 初始化失败
         # 登录行情账号
         self.__result_market_login = Utils.code_transform(
             self.__market.Login(self.__broker_id, self.__user_id, self.__password))
         if self.__result_market_login == 0:
-            print('MarketManagerForUi.__init__() 登录行情账号成功，broker_id =', broker_id)
+            print('MarketManagerForUi.__init__() 登录行情账号成功，broker_id =', self.__broker_id)
         else:
-            print('MarketManagerForUi.__init__() 登录行情账号失败，broker_id =', broker_id, '返回值：', self.__result_market_login)
+            print('MarketManagerForUi.__init__() 登录行情账号失败，broker_id =', self.__broker_id, '返回值：', self.__result_market_login)
             self.__init_finished = False  # 初始化失败
 
         # 已经订阅行情的合约列表，为每一个合约创建一个字典，键名为instrument_id，键值为list，list元素为user_id+strategy_id
@@ -256,7 +252,7 @@ class MarketManagerForUi(QObject):
         # ['cu1705', 'cu1706']
         self.__list_instrument_subscribed_detail_group_box = list()
 
-        self.__TradingDay = self.__market.get_TradingDay().decode()
+        self.__TradingDay = self.__market.get_TradingDay()
         print("MarketManagerForUi.__init__() 行情端口交易日：", self.__TradingDay)
         self.__init_finished = True  # 初始化成功
         self.__a_tick = None
@@ -318,8 +314,8 @@ class MarketManagerForUi(QObject):
             # 遍历已订阅的合约列表
             for instrument_id_subscribed in self.__list_instrument_subscribed_detail:  # instrument_id_subscribed是{b'cu1609': '80065801'}
                 # 找到已经订阅的合约，将对应的订阅者（user_id+strategy_id）删除
-                if not isinstance(instrument_id, bytes):
-                    instrument_id = instrument_id.encode()
+                # if not isinstance(instrument_id, bytes):
+                #     instrument_id = instrument_id.encode()
                 if instrument_id in instrument_id_subscribed:
                     if (user_id + strategy_id) in instrument_id_subscribed[instrument_id]:
                         pass
@@ -366,7 +362,7 @@ class MarketManagerForUi(QObject):
                 # 添加将要订阅的合约代码到所有订阅行情列表中
                 self.__list_instrument_subscribed_detail_group_box.append(list_instrument_id_will_subscribe[i])
                 # 转换编码类型，MdApi接收b''类型
-                list_instrument_id_will_subscribe[i] = list_instrument_id_will_subscribe[i].encode()
+                # list_instrument_id_will_subscribe[i] = list_instrument_id_will_subscribe[i].encode()
             print('MarketManagerForUi.group_box_sub_market() list_instrument_id_will_subscribe =', list_instrument_id_will_subscribe)
             print('MarketManagerForUi.group_box_sub_market() self.__market.SubMarketData() =',  Utils.code_transform(self.__market.SubMarketData(list_instrument_id_will_subscribe)))
 
@@ -391,7 +387,7 @@ class MarketManagerForUi(QObject):
                         self.__list_instrument_subscribed_detail_group_box.remove(instrument_id)
                         break
                 # 转换编码类型，MdApi接收b''类型
-                list_instrument_id_will_unsubscribe[i] = list_instrument_id_will_unsubscribe[i].encode()
+                # list_instrument_id_will_unsubscribe[i] = list_instrument_id_will_unsubscribe[i].encode()
             print('MarketManagerForUi.group_box_sub_market() list_instrument_id_will_unsubscribe =', list_instrument_id_will_unsubscribe)
             print('MarketManagerForUi.group_box_sub_market() self.__market.UnSubMarketData() =', Utils.code_transform(self.__market.UnSubMarketData(list_instrument_id_will_unsubscribe)))
 

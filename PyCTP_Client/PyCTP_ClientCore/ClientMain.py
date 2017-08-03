@@ -582,30 +582,31 @@ if __name__ == '__main__':
     win32api.SetDllDirectory(bundle_dir)
     sys.path.append(bundle_dir)
 
-    # 删除log文件夹，创建log文件夹
-    if os.path.exists('log'):
-        pass  # 已存在文件夹，什么都不用操作
-        # print("ClientMin.'__main__' log文件夹存在，删除重建log文件夹")
-        # shutil.rmtree('log')
-    else:
-        # print("ClientMin.'__main__' log文件夹不存在，创建log文件夹")
-        os.mkdir('log')
-    # print全部存到log本地文件
-    time_str = datetime.datetime.now().strftime('%Y%m%d %H%M%S')
-
-    file_path_error = 'log/error_' + time_str + '.log'
-    stderr_handler = open(file_path_error, 'w')
-    sys.stderr = stderr_handler
-
-    file_path_stdout = 'log/out_' + time_str + '.log'
-    stdout_handler = open(file_path_stdout, 'w')
-    sys.stdout = stdout_handler
-    print('we are', frozen, 'frozen')
-    print('bundle dir is', bundle_dir)
-    print('sys.argv[0] is', sys.argv[0])
-    print('sys.executable is', sys.executable)
-    print('os.getcwd is', os.getcwd())
-    print('process_id =', os.getpid(), 'thread.getName()=', threading.current_thread().getName(), ', __main__')
+    # # 日志重定向到本地文件
+    # # 删除log文件夹，创建log文件夹
+    # if os.path.exists('log'):
+    #     pass  # 已存在文件夹，什么都不用操作
+    #     # print("ClientMin.'__main__' log文件夹存在，删除重建log文件夹")
+    #     # shutil.rmtree('log')
+    # else:
+    #     # print("ClientMin.'__main__' log文件夹不存在，创建log文件夹")
+    #     os.mkdir('log')
+    # # print全部存到log本地文件
+    # time_str = datetime.datetime.now().strftime('%Y%m%d %H%M%S')
+    #
+    # file_path_error = 'log/error_' + time_str + '.log'
+    # stderr_handler = open(file_path_error, 'w')
+    # sys.stderr = stderr_handler
+    #
+    # file_path_stdout = 'log/out_' + time_str + '.log'
+    # stdout_handler = open(file_path_stdout, 'w')
+    # sys.stdout = stdout_handler
+    # print('we are', frozen, 'frozen')
+    # print('bundle dir is', bundle_dir)
+    # print('sys.argv[0] is', sys.argv[0])
+    # print('sys.executable is', sys.executable)
+    # print('os.getcwd is', os.getcwd())
+    # print('process_id =', os.getpid(), 'thread.getName()=', threading.current_thread().getName(), ', __main__')
 
     app = QtGui.QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
