@@ -20641,8 +20641,8 @@ class CThostFtdcMdApi(_object):
 CThostFtdcMdApi_swigregister = _pyctp.CThostFtdcMdApi_swigregister
 CThostFtdcMdApi_swigregister(CThostFtdcMdApi)
 
-def CThostFtdcMdApi_CreateFtdcMdApi(*args):
-    return _pyctp.CThostFtdcMdApi_CreateFtdcMdApi(*args)
+def CThostFtdcMdApi_CreateFtdcMdApi(pszFlowPath, bIsUsingUdp, bIsMulticast):
+    return _pyctp.CThostFtdcMdApi_CreateFtdcMdApi(pszFlowPath, bIsUsingUdp, bIsMulticast)
 CThostFtdcMdApi_CreateFtdcMdApi = _pyctp.CThostFtdcMdApi_CreateFtdcMdApi
 
 class CThostFtdcTraderSpi(_object):

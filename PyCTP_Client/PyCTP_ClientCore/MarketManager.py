@@ -165,8 +165,6 @@ class MarketManager:
             if not find_flag:  # 已经订阅行情列表里不存在，则需要订阅，加入到将要订阅的行情列表
                 list_instrument_id_will_subscribe.append(instrument_id)
         if len(list_instrument_id_will_subscribe) > 0:
-            # for i in range(len(list_instrument_id_will_subscribe)):
-            #     list_instrument_id_will_subscribe[i] = list_instrument_id_will_subscribe[i].encode()
             result_SubMarketData = self.__market.SubMarketData(list_instrument_id_will_subscribe)
             print('MarketManager.sub_market() 订阅行情', Utils.code_transform(result_SubMarketData))
 
@@ -180,9 +178,7 @@ class MarketManager:
             if not find_flag:
                 list_instrument_id_will_unsubscribe.append(instrument_id)
         if len(list_instrument_id_will_unsubscribe) > 0:
-            # for i in range(len(list_instrument_id_will_unsubscribe)):
-            #     list_instrument_id_will_unsubscribe[i] = list_instrument_id_will_unsubscribe[i].encode()
-            print('MarketManager.sub_market() 订阅行情', Utils.code_transform(self.__market.UnSubMarketData(list_instrument_id_will_subscribe)))
+            print('MarketManager.sub_market() 订阅行情', Utils.code_transform(self.__market.UnSubMarketData(list_instrument_id_will_unsubscribe)))
 
     # 登出行情账号，包含登出、断开连接、释放实例
     def un_connect(self):
@@ -211,18 +207,12 @@ class MarketManagerForUi(QObject):
     # def __init__(self, front_address, broker_id, user_id='', password=''):
     def __init__(self, dict_args, parent=None):
         super(MarketManagerForUi, self).__init__(parent)
-        print('process_id =', os.getpid(), ', MarketManagerForUi.__init__() dict_arguments =', dict_args)
+        print('MarketManagerForUi.__init__() dict_args =', dict_args)
         # 多账户系统中，只需要创建一个行情API
         self.__front_address = dict_args['frontaddress']
         self.__broker_id = dict_args['brokerid']
         self.__user_id = dict_args['userid']
         self.__password = dict_args['password']
-        # s_tmp = (front_address[6:]).encode()
-        # n_position = s_tmp.index(b':')
-        # s_part1 = (s_tmp[:n_position])
-        # s_part2 = (s_tmp[n_position + 1:])
-        # s_path = b'conn/md/' + s_part1 + b'_' + s_part2 + b'/'
-        # Utils.make_dirs(s_path)  # 创建流文件路劲
         self.__market = PyCTP_Market_API(self.__front_address,
                                          self.__broker_id,
                                          self.__user_id,
@@ -230,15 +220,14 @@ class MarketManagerForUi(QObject):
         self.__market.set_MarketManager(self)
         # self.__market.set_strategy(strategy)
         # 连接行情前置
-        self.__result_market_connect = Utils.code_transform(self.__market.Connect(self.__front_address))
+        self.__result_market_connect = self.__market.Connect(self.__front_address)
         if self.__result_market_connect == 0:
             print('MarketManagerForUi.__init__() 连接行情前置成功，broker_id =', self.__broker_id)
         else:
             print('MarketManagerForUi.__init__() 连接行情前置失败,broker_id =', self.__broker_id, '返回值：', self.__result_market_connect)
             self.__init_finished = False  # 初始化失败
         # 登录行情账号
-        self.__result_market_login = Utils.code_transform(
-            self.__market.Login(self.__broker_id, self.__user_id, self.__password))
+        self.__result_market_login = self.__market.Login(self.__broker_id, self.__user_id, self.__password)
         if self.__result_market_login == 0:
             print('MarketManagerForUi.__init__() 登录行情账号成功，broker_id =', self.__broker_id)
         else:

@@ -48,7 +48,7 @@ class PyCTP_Market_API(pyctp.CThostFtdcMdSpi):
         s_path = 'conn/md/' + s_part1 + '_' + s_part2 + '/'
         Utils.make_dirs(s_path)
         # 创建api对象
-        self.api = pyctp.CThostFtdcMdApi_CreateFtdcMdApi(s_path)
+        self.api = pyctp.CThostFtdcMdApi_CreateFtdcMdApi(s_path, False, False)
         self.api.RegisterSpi(self)
         self.api.RegisterFront(frontAddr)
         self.api.Init()
@@ -123,12 +123,12 @@ class PyCTP_Market_API(pyctp.CThostFtdcMdSpi):
                 return -4
         return ret
 
-    def SubMarketData(self, InstrumentID):
-        print(">>>PyCTP_Market.SubMarketData() InstrumentID =", InstrumentID)
+    def SubMarketData(self, list_InstrumentID):
+        print(">>>PyCTP_Market.SubMarketData() list_InstrumentID =", list_InstrumentID)
         """ 订阅行情 """
         self.__rsp_SubMarketData = dict(results=[], ErrorID=0, event=threading.Event(), RequestID=self.__IncRequestID())
-        ret = self.api.SubscribeMarketData(InstrumentID, len(InstrumentID))
-        print(">>>PyCTP_Market.SubMarketData() ret =", ret)
+        ret = self.api.SubscribeMarketData(list_InstrumentID, len(list_InstrumentID))
+        # print(">>>PyCTP_Market.SubMarketData() ret =", ret)
         if ret == 0:
             self.__rsp_SubMarketData['event'].clear()
             if self.__rsp_SubMarketData['event'].wait(self.TIMEOUT):

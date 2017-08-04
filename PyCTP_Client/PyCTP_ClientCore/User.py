@@ -187,6 +187,7 @@ class User():
     # 登录期货账号
     def login_trade_account(self):
         """登录期货账号"""
+        print(">>>User.login_trade_account() called")
         self.qry_api_interval_manager()  # API查询时间间隔管理
         login_trade_account = self.__trader.Login(self.__BrokerID, self.__user_id, self.__Password)
         # 登录期货账号状态记录到CTPManager的user状态字典，成功为0
@@ -257,7 +258,7 @@ class User():
         time_now = datetime.now()
         self.__date_qry_inverstor_position_detail = time_now.strftime('%Y%m%d')  # 查询投资者持仓明细的北京时间
         self.__time_qry_inverstor_position_detail = time_now.strftime('%H:%M:%S')  # 查询投资者持仓明细的北京时间
-        self.__QryInvestorPositionDetail = Utils.code_transform(self.__trader.QryInvestorPositionDetail())
+        self.__QryInvestorPositionDetail = self.__trader.QryInvestorPositionDetail()
         if isinstance(self.__QryInvestorPositionDetail, list):
             self.__dict_create_user_status['QryInvestorPositionDetail'] = 0
             print("User.__init__() user_id=", self.__user_id, '查询投资者持仓明细成功，长度', len(self.__QryInvestorPositionDetail), self.__QryInvestorPositionDetail)
@@ -287,7 +288,6 @@ class User():
                         'LastSettlementPrice': i['LastSettlementPrice']
                     }
                     self.__qry_investor_position_detail.append(j)
-            print("User.__init__() user_id=", self.__user_id, 'self.__qry_investor_position_detail，长度', len(self.__qry_investor_position_detail), self.__qry_investor_position_detail)
         else:
             self.__dict_create_user_status[
                 'QryInvestorPositionDetail'] = self.__QryInvestorPositionDetail
@@ -982,7 +982,7 @@ class User():
             self.update_list_position_detail_for_trade(trade)  # 更新user的持仓明细，同时统计平仓盈亏
             self.__commission += self.count_commission(trade)
         else:
-            print("User.handle_OnRtnTrade() 过滤掉查询投资者持仓明细之前的trade，trade['Date'] =", trade['TradeDate'], "trade['TradeTime'] =", trade['TradeTime'])
+            print("User.handle_OnRtnTrade() 过滤掉查询投资者持仓明细之前的trade，trade['Date'] =", trade['TradeDate'], "trade['TradeTime'] =", trade['TradeTime'], "trade =", trade)
 
     # 转PyCTP_Market_API类中回调函数OnRtnOrder
     def OnRtnOrder(self, Order):
@@ -1068,8 +1068,8 @@ class User():
                         and Order['InsertTime'] >= self.__time_qry_trading_account):
                 self.count_commission_order(Order)
             else:
-                print("User.handle_OnRtnTrade() 过滤掉查询投资者持仓明细之前的trade，Order['InsertDate'] =", Order['InsertDate'],
-                      "Order['InsertTime'] =", Order['InsertTime'])
+                print("User.handle_OnRtnOrder() 过滤掉查询投资者持仓明细之前的Order，Order['InsertDate'] =", Order['InsertDate'],
+                      "Order['InsertTime'] =", Order['InsertTime'], "Order =", Order)
                 # self.count_commission_order(Order)
 
     # 处理OnRtnTrade的线程

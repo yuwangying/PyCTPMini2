@@ -147,7 +147,7 @@ class PyCTP_Trader_API(pyctp.CThostFtdcTraderSpi):
             # else:
             #     return self.__rsp_QryInstrument['results']
             self.__rsp_QryInstrument['event'].clear()
-            if self.__rsp_QryInstrument['event'].wait(60.0):
+            if self.__rsp_QryInstrument['event'].wait(self.TIMEOUT):
                 if self.__rsp_QryInstrument['ErrorID'] != 0:
                     return self.__rsp_QryInstrument['ErrorID']
                 return self.__rsp_QryInstrument['results']
@@ -544,6 +544,7 @@ class PyCTP_Trader_API(pyctp.CThostFtdcTraderSpi):
 
     def OnRspUserLogin(self, RspUserLoginField, RspInfoField, RequestID, IsLast):
         """ 登录请求响应 """
+        # if IsLast:
         if RequestID == self.__rsp_Login['RequestID'] and IsLast:
             self.__BrokerID = RspUserLoginField.BrokerID
             self.__InvestorID = RspUserLoginField.UserID
@@ -583,42 +584,45 @@ class PyCTP_Trader_API(pyctp.CThostFtdcTraderSpi):
                     'ErrorMsg': RspInfoField.ErrorMsg  # 错误信息
                 }
                 self.__rsp_QryInstrument.update(RspInfo)
-            if InstrumentField is not None:
-                Instrument = {
-                    'InstrumentID': InstrumentField.InstrumentID,  # 合约代码;
-                    'ExchangeID': InstrumentField.ExchangeID,  # 交易所代码
-                    'InstrumentName': InstrumentField.InstrumentName,  # 合约名称
-                    'ExchangeInstID': InstrumentField.ExchangeInstID,  # 合约在交易所的代码
-                    'ProductID': InstrumentField.ProductID,  # 产品代码
-                    'ProductClass': InstrumentField.ProductClass,  # 产品类型
-                    'DeliveryYear': InstrumentField.DeliveryYear,  # 交割年份
-                    'DeliveryMonth': InstrumentField.DeliveryMonth, # 交割月
-                    'MaxMarketOrderVolume': InstrumentField.MaxMarketOrderVolume,  # 市价单最大下单量
-                    'MinMarketOrderVolume': InstrumentField.MinMarketOrderVolume,  # 市价单最小下单量
-                    'MaxLimitOrderVolume': InstrumentField.MaxLimitOrderVolume,  # 限价单最大下单量
-                    'MinLimitOrderVolume': InstrumentField.MinLimitOrderVolume,  # 限价单最小下单量
-                    'VolumeMultiple': InstrumentField.VolumeMultiple,  # 合约数量乘数
-                    'PriceTick': InstrumentField.PriceTick,  # 最小变动价位
-                    'CreateDate':  InstrumentField.CreateDate,  # 创建日
-                    'OpenDate': InstrumentField.OpenDate,  # 上市日
-                    'ExpireDate': InstrumentField.ExpireDate,  # 到期日
-                    'StartDelivDate': InstrumentField.StartDelivDate,  # 开始交割日
-                    'EndDelivDate': InstrumentField.EndDelivDate,  # 结束交割日
-                    'InstLifePhase': InstrumentField.InstLifePhase,  # 合约生命周期状态
-                    'IsTrading': InstrumentField.IsTrading,  # 当前是否交易
-                    'PositionType': InstrumentField.PositionType,  # 持仓类型
-                    'PositionDateType': InstrumentField.PositionDateType,  # 持仓日期类型
-                    'LongMarginRatio': InstrumentField.LongMarginRatio,  # 多头保证金率
-                    'ShortMarginRatio': InstrumentField.ShortMarginRatio,  # 空头保证金率
-                    'MaxMarginSideAlgorithm': InstrumentField.MaxMarginSideAlgorithm,  # 是否使用大额单边保证金算法
-                    'UnderlyingInstrID': InstrumentField.UnderlyingInstrID,  # 基础商品代码
-                    'StrikePrice': InstrumentField.StrikePrice,  # 执行价
-                    'OptionsType': InstrumentField.OptionsType,  # 期权类型
-                    'UnderlyingMultiple': InstrumentField.UnderlyingMultiple,  # 合约基础商品乘数
-                    'CombinationType': InstrumentField.CombinationType  # 组合类型
-                }
-                self.__rsp_QryInstrument['results'].append(Instrument)
+            if not IsLast:
+                if InstrumentField is not None:
+                    Instrument = {
+                        'InstrumentID': InstrumentField.InstrumentID,  # 合约代码;
+                        'ExchangeID': InstrumentField.ExchangeID,  # 交易所代码
+                        'InstrumentName': InstrumentField.InstrumentName,  # 合约名称
+                        'ExchangeInstID': InstrumentField.ExchangeInstID,  # 合约在交易所的代码
+                        'ProductID': InstrumentField.ProductID,  # 产品代码
+                        'ProductClass': InstrumentField.ProductClass,  # 产品类型
+                        'DeliveryYear': InstrumentField.DeliveryYear,  # 交割年份
+                        'DeliveryMonth': InstrumentField.DeliveryMonth, # 交割月
+                        'MaxMarketOrderVolume': InstrumentField.MaxMarketOrderVolume,  # 市价单最大下单量
+                        'MinMarketOrderVolume': InstrumentField.MinMarketOrderVolume,  # 市价单最小下单量
+                        'MaxLimitOrderVolume': InstrumentField.MaxLimitOrderVolume,  # 限价单最大下单量
+                        'MinLimitOrderVolume': InstrumentField.MinLimitOrderVolume,  # 限价单最小下单量
+                        'VolumeMultiple': InstrumentField.VolumeMultiple,  # 合约数量乘数
+                        'PriceTick': InstrumentField.PriceTick,  # 最小变动价位
+                        'CreateDate':  InstrumentField.CreateDate,  # 创建日
+                        'OpenDate': InstrumentField.OpenDate,  # 上市日
+                        'ExpireDate': InstrumentField.ExpireDate,  # 到期日
+                        'StartDelivDate': InstrumentField.StartDelivDate,  # 开始交割日
+                        'EndDelivDate': InstrumentField.EndDelivDate,  # 结束交割日
+                        'InstLifePhase': InstrumentField.InstLifePhase,  # 合约生命周期状态
+                        'IsTrading': InstrumentField.IsTrading,  # 当前是否交易
+                        'PositionType': InstrumentField.PositionType,  # 持仓类型
+                        'PositionDateType': InstrumentField.PositionDateType,  # 持仓日期类型
+                        'LongMarginRatio': InstrumentField.LongMarginRatio,  # 多头保证金率
+                        'ShortMarginRatio': InstrumentField.ShortMarginRatio,  # 空头保证金率
+                        'MaxMarginSideAlgorithm': InstrumentField.MaxMarginSideAlgorithm,  # 是否使用大额单边保证金算法
+                        'UnderlyingInstrID': InstrumentField.UnderlyingInstrID,  # 基础商品代码
+                        'StrikePrice': InstrumentField.StrikePrice,  # 执行价
+                        'OptionsType': InstrumentField.OptionsType,  # 期权类型
+                        'UnderlyingMultiple': InstrumentField.UnderlyingMultiple,  # 合约基础商品乘数
+                        'CombinationType': InstrumentField.CombinationType  # 组合类型
+                    }
+                    # print(">>>PyCTP_Trade.OnRspQryInstrument() IsLast =", IsLast, "Instrument =", Instrument)
+                    self.__rsp_QryInstrument['results'].append(Instrument)
             if IsLast:
+                print(">>>PyCTP_Trade.OnRspQryInstrument() IsLast =", IsLast)
                 self.__rsp_QryInstrument['event'].set()
 
     def OnRspQryInstrumentMarginRate(self, InstrumentMarginRateField, RspInfo, RequestID, IsLast):
@@ -861,37 +865,38 @@ class PyCTP_Trader_API(pyctp.CThostFtdcTraderSpi):
                     'ErrorMsg': RspInfoField.ErrorMsg  # 错误信息
                 }
                 self.__rsp_QryInvestorPositionDetail.update(RspInfo)
-            if InvestorPositionDetailField is not None:
-                InvestorPositionDetail = {
-                    'InstrumentID': InvestorPositionDetailField.InstrumentID,  # 合约代码
-                    'BrokerID': InvestorPositionDetailField.BrokerID,  # 经纪公司代码
-                    'InvestorID': InvestorPositionDetailField.InvestorID,  # 投资者代码
-                    'HedgeFlag': InvestorPositionDetailField.HedgeFlag,  # 投机套保标志
-                    'Direction': InvestorPositionDetailField.Direction,  # 买卖
-                    'OpenDate': InvestorPositionDetailField.OpenDate,  # 开仓日期
-                    'TradeID': InvestorPositionDetailField.TradeID,  # 成交编号
-                    'Volume': InvestorPositionDetailField.Volume,  # 数量
-                    'OpenPrice': InvestorPositionDetailField.OpenPrice,  # 开仓价
-                    'TradingDay': InvestorPositionDetailField.TradingDay,  # 交易日
-                    'SettlementID': InvestorPositionDetailField.SettlementID,  # 结算编号
-                    'TradeType': InvestorPositionDetailField.TradeType,  # 成交类型
-                    'CombInstrumentID': InvestorPositionDetailField.CombInstrumentID,  # 组合合约代码
-                    'ExchangeID': InvestorPositionDetailField.ExchangeID,  # 交易所代码
-                    'CloseProfitByDate': InvestorPositionDetailField.CloseProfitByDate,  # 逐日盯市平仓盈亏
-                    'CloseProfitByTrade': InvestorPositionDetailField.CloseProfitByTrade,  # 逐笔对冲平仓盈亏
-                    'PositionProfitByDate': InvestorPositionDetailField.PositionProfitByDate,  # 逐日盯市持仓盈亏
-                    'PositionProfitByTrade': InvestorPositionDetailField.PositionProfitByTrade,  # 逐笔对冲持仓盈亏
-                    'Margin': InvestorPositionDetailField.Margin,  # 投资者保证金
-                    'ExchMargin': InvestorPositionDetailField.ExchMargin,  # 交易所保证金
-                    'MarginRateByMoney': InvestorPositionDetailField.MarginRateByMoney,  # 保证金率
-                    'MarginRateByVolume': InvestorPositionDetailField.MarginRateByVolume,  # 保证金率(按手数)
-                    'LastSettlementPrice': InvestorPositionDetailField.LastSettlementPrice,  # 昨结算价
-                    'SettlementPrice': InvestorPositionDetailField.SettlementPrice,  # 结算价
-                    'CloseVolume': InvestorPositionDetailField.CloseVolume,  # 平仓量
-                    'CloseAmount': InvestorPositionDetailField.CloseAmount, # 平仓金额
-                }
-                self.__rsp_QryInvestorPositionDetail['results'].append(InvestorPositionDetail)
-            if IsLast:
+            if not IsLast:
+                if InvestorPositionDetailField is not None:
+                    InvestorPositionDetail = {
+                        'InstrumentID': InvestorPositionDetailField.InstrumentID,  # 合约代码
+                        'BrokerID': InvestorPositionDetailField.BrokerID,  # 经纪公司代码
+                        'InvestorID': InvestorPositionDetailField.InvestorID,  # 投资者代码
+                        'HedgeFlag': InvestorPositionDetailField.HedgeFlag,  # 投机套保标志
+                        'Direction': InvestorPositionDetailField.Direction,  # 买卖
+                        'OpenDate': InvestorPositionDetailField.OpenDate,  # 开仓日期
+                        'TradeID': InvestorPositionDetailField.TradeID,  # 成交编号
+                        'Volume': InvestorPositionDetailField.Volume,  # 数量
+                        'OpenPrice': InvestorPositionDetailField.OpenPrice,  # 开仓价
+                        'TradingDay': InvestorPositionDetailField.TradingDay,  # 交易日
+                        'SettlementID': InvestorPositionDetailField.SettlementID,  # 结算编号
+                        'TradeType': InvestorPositionDetailField.TradeType,  # 成交类型
+                        'CombInstrumentID': InvestorPositionDetailField.CombInstrumentID,  # 组合合约代码
+                        'ExchangeID': InvestorPositionDetailField.ExchangeID,  # 交易所代码
+                        'CloseProfitByDate': InvestorPositionDetailField.CloseProfitByDate,  # 逐日盯市平仓盈亏
+                        'CloseProfitByTrade': InvestorPositionDetailField.CloseProfitByTrade,  # 逐笔对冲平仓盈亏
+                        'PositionProfitByDate': InvestorPositionDetailField.PositionProfitByDate,  # 逐日盯市持仓盈亏
+                        'PositionProfitByTrade': InvestorPositionDetailField.PositionProfitByTrade,  # 逐笔对冲持仓盈亏
+                        'Margin': InvestorPositionDetailField.Margin,  # 投资者保证金
+                        'ExchMargin': InvestorPositionDetailField.ExchMargin,  # 交易所保证金
+                        'MarginRateByMoney': InvestorPositionDetailField.MarginRateByMoney,  # 保证金率
+                        'MarginRateByVolume': InvestorPositionDetailField.MarginRateByVolume,  # 保证金率(按手数)
+                        'LastSettlementPrice': InvestorPositionDetailField.LastSettlementPrice,  # 昨结算价
+                        'SettlementPrice': InvestorPositionDetailField.SettlementPrice,  # 结算价
+                        'CloseVolume': InvestorPositionDetailField.CloseVolume,  # 平仓量
+                        'CloseAmount': InvestorPositionDetailField.CloseAmount, # 平仓金额
+                    }
+                    self.__rsp_QryInvestorPositionDetail['results'].append(InvestorPositionDetail)
+            elif IsLast:
                 self.__rsp_QryInvestorPositionDetail['event'].set()
 
     def OnRspQryTradingAccount(self, TradingAccountField, RspInfoField, RequestID, IsLast):
@@ -1147,6 +1152,7 @@ class PyCTP_Trader_API(pyctp.CThostFtdcTraderSpi):
         # Order = Utils.code_transform(Order)
         # t = datetime.now().strftime("%Y-%m-%d %H:%M:%S %f")
         # Order['time'] = t
+        date = datetime.now().strftime('%Y%m%d')
         Order = {
             'BrokerID': OrderField.BrokerID,  # 经纪公司代码
             'InvestorID': OrderField.InvestorID,  # 投资者代码
@@ -1186,7 +1192,8 @@ class PyCTP_Trader_API(pyctp.CThostFtdcTraderSpi):
             'OrderType': OrderField.OrderType,  # 报单类型
             'VolumeTraded': OrderField.VolumeTraded,  # 今成交数量
             'VolumeTotal': OrderField.VolumeTotal,  # 剩余数量
-            'InsertDate': OrderField.InsertDate,  # 报单日期
+            # 'InsertDate': OrderField.InsertDate,  # 报单日期，mini2柜台返回的该字段为空
+            'InsertDate': date,  # 报单日期
             'InsertTime': OrderField.InsertTime,  # 委托时间
             'ActiveTime': OrderField.ActiveTime,  # 激活时间
             'SuspendTime': OrderField.SuspendTime,  # 挂起时间
@@ -1212,6 +1219,7 @@ class PyCTP_Trader_API(pyctp.CThostFtdcTraderSpi):
             'IPAddress': OrderField.IPAddress,  # IP地址
             'MacAddress': OrderField.MacAddress  # Mac地址
         }
+        print(">>>PyCTP_Trade.OnRtnOrder() Order =", Order)
         self.__user.OnRtnOrder(Order)  # 转回调给User类的OnRtnOrder
         # 未调用API OrderInsert之前还未生成属性_PyCTP_Trader_API__rsp_OrderInsert
         # if hasattr(self, '_PyCTP_Trader_API__rsp_OrderInsert'):
@@ -1232,6 +1240,7 @@ class PyCTP_Trader_API(pyctp.CThostFtdcTraderSpi):
         # Trade['time'] = t
         # if Utils.PyCTP_Trade_API_print:
         #     print('PyCTP_Trade.OnRtnTrade()', 'OrderRef:', Trade['OrderRef'], 'Time:', t, 'Trade:', Trade)
+        date = datetime.now().strftime('%Y%m%d')
         Trade = {
             'BrokerID': TradeField.BrokerID,  # 经纪公司代码
             'InvestorID': TradeField.InvestorID,  # 投资者代码
@@ -1251,6 +1260,7 @@ class PyCTP_Trader_API(pyctp.CThostFtdcTraderSpi):
             'Price': TradeField.Price,  # 价格
             'Volume': TradeField.Volume,  # 数量
             'TradeDate': TradeField.TradeDate,  # 成交时期
+            # 'TradeDate': date,  # 成交时期
             'TradeTime': TradeField.TradeTime,  # 成交时间
             'TradeType': TradeField.TradeType,  # 成交类型
             'PriceSource': TradeField.PriceSource,  # 成交价来源
@@ -1264,6 +1274,7 @@ class PyCTP_Trader_API(pyctp.CThostFtdcTraderSpi):
             'BrokerOrderSeq': TradeField.BrokerOrderSeq,  # 经纪公司报单编号
             'TradeSource': TradeField.TradeSource  # 成交来源
         }
+        print(">>>PyCTP_Trade.OnRtnTrade() Trade =", Trade)
         self.__user.OnRtnTrade(Trade)  # 转到user回调函数
         # for i in self.__user.get_list_strategy():  # 转到strategy回调函数
         #     if Trade['OrderRef'][-2:] == i.get_strategy_id():
