@@ -366,8 +366,24 @@ class QAccountWidget(QWidget, Ui_Form):
             return
         a_scale = self.__list_update_group_box_data[47]  # A合约乘数
         b_scale = self.__list_update_group_box_data[48]  # B合约乘数
-        self.__spread_long = round(list_data[0] * a_scale - list_data[3] * b_scale, 2)
-        self.__spread_short = round(list_data[1] * a_scale - list_data[2] * b_scale, 2)
+        # 通过信号槽传来的市场行情list结构list_market = [self.__a_tick['BidPrice1'], self.__a_tick['AskPrice1'], self.__b_tick['BidPrice1'], self.__b_tick['AskPrice1']]
+        a_BidPrice1 = round(list_data[0], 2)
+        a_AskPrice1 = round(list_data[1], 2)
+        b_BidPrice1 = round(list_data[2], 2)
+        b_AskPrice1 = round(list_data[3], 2)
+
+        # 策略所选择的下单算法
+        order_algorithm = self.__list_update_group_box_data[17]
+
+        # 下单算法1、2
+        if order_algorithm in ['01', '02']:
+            self.__spread_long = a_BidPrice1 * a_scale - b_AskPrice1 * b_scale
+            self.__spread_short = a_AskPrice1 * a_scale - b_BidPrice1 * b_scale
+        # 下单算法3
+        elif order_algorithm == '03':
+            self.__spread_long = a_AskPrice1 * a_scale - b_AskPrice1 * b_scale
+            self.__spread_short = a_BidPrice1 * a_scale - b_BidPrice1 * b_scale
+
         # print(">>> QAccountWidget.slot_update_spread_ui() self.__spread_long =", self.__spread_long, "self.__spread_short =", self.__spread_short)
         if self.__spread_long != self.__spread_long_last:
             # print(">>> QAccountWidget.slot_update_spread_ui() 更新多头价差", self.__spread_long)

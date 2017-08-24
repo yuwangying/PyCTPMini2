@@ -109,6 +109,7 @@ class Strategy():
         self.__sell_close_on_off = dict_args['sell_close_on_off']  # 价差卖平，开关，初始值为1，状态开
         self.__buy_open_on_off = dict_args['buy_open_on_off']     # 价差买开，开关，初始值为1，状态开
         self.__update_position_detail_record_time = dict_args['update_position_detail_record_time']  # 修改策略持仓时间，空字符串：本交易日没有修改持仓
+        self.__update_position_detail_record_orderref = dict_args['update_position_detail_record_orderref']  # 修改策略持仓时间，空字符串：本交易日没有修改持仓
         # print("Strategy.set_arguments() user_id =", self.__user_id, "strategy_id =", self.__strategy_id, "self.__update_position_detail_record_time =", self.__update_position_detail_record_time)
 
     # 获取参数
@@ -293,7 +294,7 @@ class Strategy():
                 len2 = len(self.__list_position_detail_for_trade)
                 print("Strategy.init_position_detail() user_id =", self.__user_id, "strategy_id =", self.__strategy_id, "昨持仓明细 为初始化持仓明细，order、trade持仓明细的长度分别为", len1, len2)
             # 当前交易日有修改过策略持仓，持仓明细初始值为修改策略持仓一刻时保存的今日持仓明细
-            else:
+            elif len(self.__update_position_detail_record_time) > 0:
                 # 今日持仓明细order
                 self.__list_position_detail_for_order = list()
                 for i in self.__user.get_server_list_position_detail_for_order_today():
@@ -1155,7 +1156,7 @@ class Strategy():
             if Order['OrderStatus'] == '5':
                 if Order['InstrumentID'] == self.__a_instrument_id:
                     self.__a_action_count_strategy += 1
-                else:
+                elif Order['InstrumentID'] == self.__b_instrument_id:
                     self.__b_action_count_strategy += 1
 
     # 成交统计（trade）
@@ -1675,13 +1676,12 @@ class Strategy():
     #     self.__b_action_count = self.__user.get_dict_action()[self.__b_instrument_id]
 
     def set_a_action_count(self, int_count):
-        print(">>> Strategy.set_a_action_count() user_id =", self.__user_id, "strategy_id =", self.__strategy_id, "instrument_id =", self.__a_instrument_id, "self.__a_action_count =", self.__a_action_count)
+        # print(">>> Strategy.set_a_action_count() user_id =", self.__user_id, "strategy_id =", self.__strategy_id, "instrument_id =", self.__a_instrument_id, "self.__a_action_count =", self.__a_action_count)
         self.__a_action_count = int_count
         # self.signal_update_strategy_position.emit(self)  # 更新界面
 
     def set_b_action_count(self, int_count):
-        print(">>> Strategy.set_b_action_count() user_id =", self.__user_id, "strategy_id =", self.__strategy_id,
-              "instrument_id =", self.__b_instrument_id, "self.__b_action_count =", self.__b_action_count)
+        # print(">>> Strategy.set_b_action_count() user_id =", self.__user_id, "strategy_id =", self.__strategy_id, "instrument_id =", self.__b_instrument_id, "self.__b_action_count =", self.__b_action_count)
         self.__b_action_count = int_count
         # self.signal_update_strategy_position.emit(self)  # 更新界面
 
@@ -2243,6 +2243,12 @@ class Strategy():
 
         # 添加字段，本次成交量'VolumeTradedBatch'
         Order = self.add_VolumeTradedBatch(Order)
+
+        # 当前交易日修改过持仓，对OnRtnTrade过滤：更新持仓量、更新持仓明细、更新占用保证金
+        if self.__filter_OnRtnTrade:
+            if Order['OrderRef'] <= self.__update_position_detail_record_orderref:
+                print("Strategy.OnRtnOrder() user_id =", self.__user_id, "strategy_id =", self.__strategy_id, "过滤修改持仓之前的Order记录OrderRef <", self.__update_position_detail_record_orderref)
+                return
 
         # 更新持仓明细列表
         self.update_list_position_detail_for_order(Order)

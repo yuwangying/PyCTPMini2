@@ -237,7 +237,7 @@ class PyCTP_Market_API(pyctp.CThostFtdcMdSpi):
 
     def OnRspSubMarketData(self, SpecificInstrumentField, RspInfoField, RequestID, IsLast):
         """ 订阅行情应答 """
-        print(">>>PyCTP_Market.OnRspSubMarketData() called")
+        # print(">>>PyCTP_Market.OnRspSubMarketData() called")
         if RequestID == self.__rsp_SubMarketData['RequestID']:
             if RspInfoField is not None:
                 RspInfo = {

@@ -140,6 +140,7 @@ class PyCTP_Trader_API(pyctp.CThostFtdcTraderSpi):
                                         RequestID=self.__IncRequestID(),
                                         results=[],
                                         ErrorID=0)
+        # print(">>>PyCTP_Trade.QryInstrument() 调用 请求查询合约api方法ReqQryInstrument")
         ret = self.api.ReqQryInstrument(feild_QryInstrument, self.__rsp_QryInstrument['RequestID'])
         if ret == 0:
             # if self.__rsp_QryInstrument['ErrorID'] != 0:
@@ -277,6 +278,7 @@ class PyCTP_Trader_API(pyctp.CThostFtdcTraderSpi):
     def QryInvestorPositionDetail(self, InstrumentID=''):
         """ 请求查询投资者持仓明细 """
         # ywy 20170120
+        # print(">>>PyCTP_Trade.QryInvestorPositionDetail() called")
         # QryInvestorPositionFieldDetail = dict(BrokerID=self.__BrokerID,
         #                                       InvestorID=self.__InvestorID,
         #                                       InstrumentID=InstrumentID)
@@ -622,7 +624,7 @@ class PyCTP_Trader_API(pyctp.CThostFtdcTraderSpi):
                     # print(">>>PyCTP_Trade.OnRspQryInstrument() IsLast =", IsLast, "Instrument =", Instrument)
                     self.__rsp_QryInstrument['results'].append(Instrument)
             if IsLast:
-                print(">>>PyCTP_Trade.OnRspQryInstrument() IsLast =", IsLast)
+                # print(">>>PyCTP_Trade.OnRspQryInstrument() IsLast =", IsLast)
                 self.__rsp_QryInstrument['event'].set()
 
     def OnRspQryInstrumentMarginRate(self, InstrumentMarginRateField, RspInfo, RequestID, IsLast):
@@ -1219,7 +1221,7 @@ class PyCTP_Trader_API(pyctp.CThostFtdcTraderSpi):
             'IPAddress': OrderField.IPAddress,  # IP地址
             'MacAddress': OrderField.MacAddress  # Mac地址
         }
-        print(">>>PyCTP_Trade.OnRtnOrder() Order =", Order)
+        # print(">>>PyCTP_Trade.OnRtnOrder() Order =", Order)
         self.__user.OnRtnOrder(Order)  # 转回调给User类的OnRtnOrder
         # 未调用API OrderInsert之前还未生成属性_PyCTP_Trader_API__rsp_OrderInsert
         # if hasattr(self, '_PyCTP_Trader_API__rsp_OrderInsert'):
