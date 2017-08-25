@@ -1170,7 +1170,7 @@ class User():
                         self.__dict_strategy[strategy_id].OnRtnTrade(trade)
                         found_flag = True
                 if not found_flag:
-                    print("User.threading_run_OnRtnTrade() 异常，错误 user_id =", self.__user_id,
+                    print("User.handle_OnRtnTrade() 异常，错误 user_id =", self.__user_id,
                           "trade未传递给策略对象,Trade结构体中StrategyID=", trade['StrategyID'])
 
     # # 处理OnRtnOrder的线程
